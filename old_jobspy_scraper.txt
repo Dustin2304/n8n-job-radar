@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""
+jobspy_scraper.py
+Wird von n8n via "Execute Command" Node aufgerufen.
+Gibt ein JSON-Array mit Job-Ergebnissen auf stdout aus.
+
+Installation (einmalig):
+  pip install python-jobspy --break-system-packages
+  oder in venv:
+  python3 -m venv ~/.venvs/jobspy && source ~/.venvs/jobspy/bin/activate && pip install python-jobspy
+"""
+
+import json
+import sys
+import time
+import warnings
+warnings.filterwarnings("ignore")
+
+try:
+    from jobspy import scrape_jobs
+except ImportError:
+    print(json.dumps({"error": "python-jobspy nicht installiert. Bitte: pip install python-jobspy"}))
+    sys.exit(1)
+
+# ── Suchkonfiguration ────────────────────────────────────────────────────────
+
+SEARCH_TERMS = [
+    "AI Engineer",
+    "ML Engineer",
+    "Machine Learning Engineer",
+    "Data Scientist",
+    "Backend Engineer Python AI",
+    "AI Product Manager",
+    "LLM Engineer",
+    "GenAI Engineer",
+]
+
+LOCATIONS = [
+    "Karlsruhe, Deutschland",
+    "Mannheim, Deutschland",
+    "Stuttgart, Deutschland",
+    "Remote, Deutschland",
+]
+
+COMPANY_FILTER = [
+    "EnBW", "dm", "dmTECH", "SAP", "inovex", "Exxeta", "adesso", "Atruvia",
+    "BridgingIT", "valantic", "CHECK24", "1&1", "Schwarz", "STACKIT",
+    "Aleph Alpha", "Fraunhofer", "KIT", "scieneers", "msg", "PTA",
+    "SEW-Eurodrive", "Bosch", "Daimler", "Mercedes", "Siemens", "Telekom",
+    "Microsoft", "Amazon", "Salesforce", "Palantir", "Hensoldt", "Airbus",
+    "Rewe", "Otto", "Würth", "Endress", "Hauser", "BASF",
+    "sovanta", "fastahead", "SoftProject", "esentri",
+]
+
+RESULTS_PER_SEARCH = 20
+HOURS_OLD = 168  # letzte 7 Tage
+
+
+def company_in_filter(company_name: str) -> bool:
+    """Prüft ob ein Unternehmensname in der Watchlist ist (fuzzy)."""
+    if not company_name:
+        return False
+    name_lower = company_name.lower()
+    return any(f.lower() in name_lower for f in COMPANY_FILTER)
+
+
+def scrape_and_collect() -> list[dict]:
+    all_jobs = []
+    seen_urls = set()
+
+    for term in SEARCH_TERMS:
+        for location in LOCATIONS[:2]:  # Nur Karlsruhe + Remote für Speed
+            try:
+                df = scrape_jobs(
+                    site_name=["indeed", "linkedin"],
+                    search_term=term,
+                    location=location,
+                    results_wanted=RESULTS_PER_SEARCH,
+                    hours_old=HOURS_OLD,
+                    country_indeed="Germany",
+                    description_format="markdown",
+                    verbose=0,
+                )
+
+                if df is None or df.empty:
+                    continue
+
+                for _, row in df.iterrows():
+                    url = str(row.get("job_url", ""))
+                    if not url or url in seen_urls:
+                        continue
+                    seen_urls.add(url)
+
+                    company = str(row.get("company", "") or "")
+                    title = str(row.get("title", "") or "")
+                    description = str(row.get("description", "") or "")[:500]
+
+                    job = {
+                        "title": title,
+                        "company": company,
+                        "location": str(row.get("location", "") or ""),
+                        "url": url,
+                        "source": str(row.get("site", "") or ""),
+                        "date_posted": str(row.get("date_posted", "") or ""),
+                        "is_remote": bool(row.get("is_remote", False)),
+                        "description": description,
+                        "search_term": term,
+                        "in_watchlist": company_in_filter(company),
+                    }
+                    all_jobs.append(job)
+
+            except Exception as e:
+                # Einzelne Fehler stillschweigend überspringen
+                continue
+
+            time.sleep(1.5)  # Rate limiting
+
+    return all_jobs
+
+
+if __name__ == "__main__":
+    jobs = scrape_and_collect()
+    print(json.dumps(jobs, ensure_ascii=False, default=str))

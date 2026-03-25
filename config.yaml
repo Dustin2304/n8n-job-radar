@@ -1,0 +1,258 @@
+# ============================================================
+# Job Radar – Configuration
+# ============================================================
+
+# ------------------------------------
+# Search profiles
+# Each profile defines a thematic search lane.
+# weight: Relevance weight used during scoring (0.0 – 1.0)
+# keywords: Passed directly as search queries to Indeed/LinkedIn
+# ------------------------------------
+profiles:
+  - name: "AI Engineering"
+    weight: 1.0
+    keywords:
+      - "AI Engineer Python LLM"
+      - "Machine Learning Engineer GenAI"
+      - "Data Scientist NLP RAG"
+      - "LLM Engineer"
+      - "GenAI Entwickler"
+      - "AI Agent Developer"
+
+  - name: "IT Consulting"
+    weight: 0.8
+    keywords:
+      - "IT Consultant AI"
+      - "Technical Consultant Python"
+      - "Digitalisierung Berater"
+      - "IT Projektmanager AI"
+      - "Digital Transformation"
+      - "Enterprise Architect AI"
+
+  - name: "Backend/Integration"
+    weight: 0.7
+    keywords:
+      - "Backend Engineer Python AI"
+      - "Integration Engineer API"
+      - "Software Engineer Python"
+
+# ------------------------------------
+# Search locations
+# radius_km: Search radius in km; 0 = exact location match (useful for Remote)
+# ------------------------------------
+locations:
+  - city: "Karlsruhe"
+    country: "Germany"
+    radius_km: 50
+    is_remote: false
+
+  - city: "Germany"
+    country: "Germany"
+    radius_km: 0
+    is_remote: true
+
+# ------------------------------------
+# Exclusion filters
+# Results are discarded if title_keywords appear in the job title
+# or if the detected seniority level is listed under levels
+# ------------------------------------
+exclude:
+  title_keywords:
+    - praktikum
+    - internship
+    - werkstudent
+    - thesis
+    - duales studium
+    - ausbildung
+    - trainee
+  levels:
+    - Internship
+
+# ------------------------------------
+# Scoring
+# threshold: Minimum score (0–100) for a job to appear in the report
+# watchlist_bonus: Extra points awarded when the company is on the watchlist
+# ------------------------------------
+scoring:
+  threshold: 50
+  watchlist_bonus: 10
+
+# ------------------------------------
+# Company watchlist
+# linkedin_id: Numeric LinkedIn company ID for direct profile scraping
+#              (null = not yet configured)
+# ------------------------------------
+companies:
+  # Karlsruhe / Baden-Württemberg
+  - name: "EnBW"
+    linkedin_id: null
+  - name: "dm"
+    linkedin_id: null
+  - name: "dmTECH"
+    linkedin_id: null
+  - name: "SAP"
+    linkedin_id: null
+  - name: "inovex"
+    linkedin_id: null
+  - name: "Exxeta"
+    linkedin_id: null
+  - name: "adesso"
+    linkedin_id: null
+  - name: "Atruvia"
+    linkedin_id: null
+  - name: "BridgingIT"
+    linkedin_id: null
+  - name: "valantic"
+    linkedin_id: null
+  - name: "CHECK24"
+    linkedin_id: null
+  - name: "1&1"
+    linkedin_id: null
+  - name: "Schwarz IT"
+    linkedin_id: null
+  - name: "STACKIT"
+    linkedin_id: null
+  - name: "Aleph Alpha"
+    linkedin_id: null
+  - name: "Fraunhofer IOSB"
+    linkedin_id: null
+  - name: "KIT"
+    linkedin_id: null
+  - name: "scieneers"
+    linkedin_id: null
+  - name: "msg Gruppe"
+    linkedin_id: null
+  - name: "PTA"
+    linkedin_id: null
+  - name: "SEW-Eurodrive"
+    linkedin_id: null
+  - name: "sovanta"
+    linkedin_id: null
+  - name: "fastahead"
+    linkedin_id: null
+  - name: "SoftProject"
+    linkedin_id: null
+  - name: "esentri"
+    linkedin_id: null
+  - name: "Heidelberg Materials"
+    linkedin_id: null
+  - name: "Verivox"
+    linkedin_id: null
+  - name: "JobRouter"
+    linkedin_id: null
+  - name: "osapiens"
+    linkedin_id: null
+  - name: "Empolis"
+    linkedin_id: null
+  - name: "aubex"
+    linkedin_id: null
+  - name: "Cinemo"
+    linkedin_id: null
+  - name: "Disy"
+    linkedin_id: null
+  - name: "SafeAD"
+    linkedin_id: null
+  - name: "Stadtwerke Karlsruhe"
+    linkedin_id: null
+  - name: "Studyflix"
+    linkedin_id: null
+  - name: "Innoopract"
+    linkedin_id: null
+  - name: "PROMATIS"
+    linkedin_id: null
+  - name: "HMS Analytical Software"
+    linkedin_id: null
+  - name: "HUBBLR"
+    linkedin_id: null
+  - name: "Mint Medical"
+    linkedin_id: null
+  - name: "Rewire"
+    linkedin_id: null
+  - name: "constellr"
+    linkedin_id: null
+  - name: "Nanoscribe"
+    linkedin_id: null
+  - name: "PAUL Tech"
+    linkedin_id: null
+  - name: "Uniserv"
+    linkedin_id: null
+  - name: "Almato"
+    linkedin_id: null
+  - name: "Synamic Technologies"
+    linkedin_id: null
+  - name: "FERCHAU"
+    linkedin_id: null
+  - name: "Machine Learning Reply"
+    linkedin_id: null
+  - name: "Data Reply"
+    linkedin_id: null
+  - name: "BearingPoint"
+    linkedin_id: null
+
+  # Industry / Automotive / Engineering
+  - name: "Bosch"
+    linkedin_id: null
+  - name: "Daimler Truck"
+    linkedin_id: null
+  - name: "Siemens"
+    linkedin_id: null
+  - name: "Endress+Hauser"
+    linkedin_id: null
+  - name: "BASF"
+    linkedin_id: null
+  - name: "Würth"
+    linkedin_id: null
+  - name: "Hensoldt"
+    linkedin_id: null
+  - name: "Airbus Defence"
+    linkedin_id: null
+  - name: "Rheinmetall"
+    linkedin_id: null
+  - name: "IPG Automotive"
+    linkedin_id: null
+  - name: "John Deere"
+    linkedin_id: null
+  - name: "Stora Enso"
+    linkedin_id: null
+  - name: "Tocon Engineering"
+    linkedin_id: null
+  - name: "Diehl Defence"
+    linkedin_id: null
+  - name: "ITK Engineering"
+    linkedin_id: null
+  - name: "Hornbach"
+    linkedin_id: null
+  - name: "Progroup"
+    linkedin_id: null
+  - name: "Bauhaus"
+    linkedin_id: null
+
+  # E-Commerce / Telco / Big Tech
+  - name: "Rewe"
+    linkedin_id: null
+  - name: "Otto"
+    linkedin_id: null
+  - name: "Telekom IT"
+    linkedin_id: null
+  - name: "Microsoft"
+    linkedin_id: null
+  - name: "Amazon"
+    linkedin_id: null
+  - name: "Salesforce"
+    linkedin_id: null
+  - name: "Palantir"
+    linkedin_id: null
+
+  # Consulting / Auditing
+  - name: "Deloitte"
+    linkedin_id: null
+  - name: "KPMG"
+    linkedin_id: null
+  - name: "PwC"
+    linkedin_id: null
+
+  # Transport / Logistics
+  - name: "Lufthansa"
+    linkedin_id: null
+  - name: "Deutsche Bahn"
+    linkedin_id: null
