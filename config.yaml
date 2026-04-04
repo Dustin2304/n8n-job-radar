@@ -1,258 +1,162 @@
-# ============================================================
-# Job Radar – Configuration
-# ============================================================
-
-# ------------------------------------
-# Search profiles
-# Each profile defines a thematic search lane.
-# weight: Relevance weight used during scoring (0.0 – 1.0)
-# keywords: Passed directly as search queries to Indeed/LinkedIn
-# ------------------------------------
-profiles:
-  - name: "AI Engineering"
-    weight: 1.0
-    keywords:
-      - "AI Engineer Python LLM"
-      - "Machine Learning Engineer GenAI"
-      - "Data Scientist NLP RAG"
-      - "LLM Engineer"
-      - "GenAI Entwickler"
-      - "AI Agent Developer"
-
-  - name: "IT Consulting"
-    weight: 0.8
-    keywords:
-      - "IT Consultant AI"
-      - "Technical Consultant Python"
-      - "Digitalisierung Berater"
-      - "IT Projektmanager AI"
-      - "Digital Transformation"
-      - "Enterprise Architect AI"
-
-  - name: "Backend/Integration"
-    weight: 0.7
-    keywords:
-      - "Backend Engineer Python AI"
-      - "Integration Engineer API"
-      - "Software Engineer Python"
-
-# ------------------------------------
-# Search locations
-# radius_km: Search radius in km; 0 = exact location match (useful for Remote)
-# ------------------------------------
 locations:
   - city: "Karlsruhe"
+    radius_km: 100
     country: "Germany"
-    radius_km: 50
-    is_remote: false
+  # Remote komplett entfernt
 
-  - city: "Germany"
-    country: "Germany"
-    radius_km: 0
-    is_remote: true
-
-# ------------------------------------
-# Exclusion filters
-# Results are discarded if title_keywords appear in the job title
-# or if the detected seniority level is listed under levels
-# ------------------------------------
-exclude:
-  title_keywords:
-    - praktikum
-    - internship
-    - werkstudent
-    - thesis
-    - duales studium
-    - ausbildung
-    - trainee
-  levels:
-    - Internship
-
-# ------------------------------------
-# Scoring
-# threshold: Minimum score (0–100) for a job to appear in the report
-# watchlist_bonus: Extra points awarded when the company is on the watchlist
-# ------------------------------------
 scoring:
-  threshold: 50
-  watchlist_bonus: 10
+  threshold_it: 50          # Kern-IT + Schnittstellen
+  threshold_non_it: 60      # Vertrieb, Marketing, Logistik
 
-# ------------------------------------
-# Company watchlist
-# linkedin_id: Numeric LinkedIn company ID for direct profile scraping
-#              (null = not yet configured)
-# ------------------------------------
-companies:
-  # Karlsruhe / Baden-Württemberg
-  - name: "EnBW"
-    linkedin_id: null
-  - name: "dm"
-    linkedin_id: null
-  - name: "dmTECH"
-    linkedin_id: null
-  - name: "SAP"
-    linkedin_id: null
-  - name: "inovex"
-    linkedin_id: null
-  - name: "Exxeta"
-    linkedin_id: null
-  - name: "adesso"
-    linkedin_id: null
-  - name: "Atruvia"
-    linkedin_id: null
-  - name: "BridgingIT"
-    linkedin_id: null
-  - name: "valantic"
-    linkedin_id: null
-  - name: "CHECK24"
-    linkedin_id: null
-  - name: "1&1"
-    linkedin_id: null
-  - name: "Schwarz IT"
-    linkedin_id: null
-  - name: "STACKIT"
-    linkedin_id: null
-  - name: "Aleph Alpha"
-    linkedin_id: null
-  - name: "Fraunhofer IOSB"
-    linkedin_id: null
-  - name: "KIT"
-    linkedin_id: null
-  - name: "scieneers"
-    linkedin_id: null
-  - name: "msg Gruppe"
-    linkedin_id: null
-  - name: "PTA"
-    linkedin_id: null
-  - name: "SEW-Eurodrive"
-    linkedin_id: null
-  - name: "sovanta"
-    linkedin_id: null
-  - name: "fastahead"
-    linkedin_id: null
-  - name: "SoftProject"
-    linkedin_id: null
-  - name: "esentri"
-    linkedin_id: null
-  - name: "Heidelberg Materials"
-    linkedin_id: null
-  - name: "Verivox"
-    linkedin_id: null
-  - name: "JobRouter"
-    linkedin_id: null
-  - name: "osapiens"
-    linkedin_id: null
-  - name: "Empolis"
-    linkedin_id: null
-  - name: "aubex"
-    linkedin_id: null
-  - name: "Cinemo"
-    linkedin_id: null
-  - name: "Disy"
-    linkedin_id: null
-  - name: "SafeAD"
-    linkedin_id: null
-  - name: "Stadtwerke Karlsruhe"
-    linkedin_id: null
-  - name: "Studyflix"
-    linkedin_id: null
-  - name: "Innoopract"
-    linkedin_id: null
-  - name: "PROMATIS"
-    linkedin_id: null
-  - name: "HMS Analytical Software"
-    linkedin_id: null
-  - name: "HUBBLR"
-    linkedin_id: null
-  - name: "Mint Medical"
-    linkedin_id: null
-  - name: "Rewire"
-    linkedin_id: null
-  - name: "constellr"
-    linkedin_id: null
-  - name: "Nanoscribe"
-    linkedin_id: null
-  - name: "PAUL Tech"
-    linkedin_id: null
-  - name: "Uniserv"
-    linkedin_id: null
-  - name: "Almato"
-    linkedin_id: null
-  - name: "Synamic Technologies"
-    linkedin_id: null
-  - name: "FERCHAU"
-    linkedin_id: null
-  - name: "Machine Learning Reply"
-    linkedin_id: null
-  - name: "Data Reply"
-    linkedin_id: null
-  - name: "BearingPoint"
-    linkedin_id: null
+profiles:
+  # ─── PROFIL 1: Kern-IT & AI (Gewicht 1.0) ────────────────────────────────
+  - name: "AI & Data Engineering"
+    weight: 1.0
+    keywords:
+      - "AI Engineer"
+      - "ML Engineer"
+      - "Data Scientist"
+      - "Data Engineer"
+      - "LLM Engineer"
+      - "GenAI Developer"
+      - "Machine Learning"
+      - "Deep Learning"
+      - "NLP Engineer"
+      - "Computer Vision"
+      - "MLOps"
+      - "Prompt Engineer"
+      - "AI Developer"
+      - "KI Entwickler"
 
-  # Industry / Automotive / Engineering
-  - name: "Bosch"
-    linkedin_id: null
-  - name: "Daimler Truck"
-    linkedin_id: null
-  - name: "Siemens"
-    linkedin_id: null
-  - name: "Endress+Hauser"
-    linkedin_id: null
-  - name: "BASF"
-    linkedin_id: null
-  - name: "Würth"
-    linkedin_id: null
-  - name: "Hensoldt"
-    linkedin_id: null
-  - name: "Airbus Defence"
-    linkedin_id: null
-  - name: "Rheinmetall"
-    linkedin_id: null
-  - name: "IPG Automotive"
-    linkedin_id: null
-  - name: "John Deere"
-    linkedin_id: null
-  - name: "Stora Enso"
-    linkedin_id: null
-  - name: "Tocon Engineering"
-    linkedin_id: null
-  - name: "Diehl Defence"
-    linkedin_id: null
-  - name: "ITK Engineering"
-    linkedin_id: null
-  - name: "Hornbach"
-    linkedin_id: null
-  - name: "Progroup"
-    linkedin_id: null
-  - name: "Bauhaus"
-    linkedin_id: null
+  - name: "Software Development"
+    weight: 1.0
+    keywords:
+      - "Software Developer"
+      - "Software Engineer"
+      - "Backend Developer"
+      - "Backend Engineer"
+      - "Fullstack Developer"
+      - "Full Stack Engineer"
+      - "Python Developer"
+      - "TypeScript Developer"
+      - "API Developer"
+      - "Cloud Engineer"
+      - "DevOps Engineer"
+      - "Platform Engineer"
+      - "Automatisierung Entwickler"
+      - "RPA Developer"
 
-  # E-Commerce / Telco / Big Tech
-  - name: "Rewe"
-    linkedin_id: null
-  - name: "Otto"
-    linkedin_id: null
-  - name: "Telekom IT"
-    linkedin_id: null
-  - name: "Microsoft"
-    linkedin_id: null
-  - name: "Amazon"
-    linkedin_id: null
-  - name: "Salesforce"
-    linkedin_id: null
-  - name: "Palantir"
-    linkedin_id: null
+  - name: "Data & Analytics"
+    weight: 1.0
+    keywords:
+      - "Data Analyst"
+      - "Business Intelligence"
+      - "BI Developer"
+      - "Analytics Engineer"
+      - "Data Platform"
+      - "Data Warehouse"
+      - "Reporting Analyst"
 
-  # Consulting / Auditing
-  - name: "Deloitte"
-    linkedin_id: null
-  - name: "KPMG"
-    linkedin_id: null
-  - name: "PwC"
-    linkedin_id: null
+  # ─── PROFIL 2: IT-Schnittstellen (Gewicht 1.0, gleiche Prio wie Kern-IT) ──
+  - name: "IT Consulting & Business Interface"
+    weight: 1.0
+    keywords:
+      - "IT Consultant"
+      - "Digitalisierungsmanager"
+      - "Digitalization Manager"
+      - "Business Analyst IT"
+      - "Prozessberater IT"
+      - "ERP Consultant Junior"        # SAP/ERP nur Junior-Level
+      - "SAP Junior"
+      - "Implementation Consultant"
+      - "Solution Architect Junior"
+      - "IT Projektmanager Junior"
 
-  # Transport / Logistics
-  - name: "Lufthansa"
-    linkedin_id: null
-  - name: "Deutsche Bahn"
-    linkedin_id: null
+  - name: "IT & Produktion / IoT"
+    weight: 1.0
+    keywords:
+      - "MES Entwickler"
+      - "IoT Developer"
+      - "Industrie 4.0"
+      - "OT Engineer"
+      - "Produktions IT"
+      - "Manufacturing Engineer IT"
+      - "Digital Factory"
+      - "Smart Manufacturing"
+      - "Automatisierungstechnik IT"
+
+  - name: "IT & Supply Chain / Logistik"
+    weight: 1.0
+    keywords:
+      - "Supply Chain IT"
+      - "Logistik IT"
+      - "Warehouse Management System"
+      - "WMS Developer"
+      - "ERP Logistik"
+      - "Supply Chain Analyst"
+      - "Demand Planning IT"
+
+  - name: "IT & Finance / Controlling"
+    weight: 1.0
+    keywords:
+      - "Finance IT"
+      - "Controlling IT"
+      - "Financial Analyst IT"
+      - "Treasury IT"
+      - "Accounting Software"
+      - "FP&A Analyst"
+      - "Revenue Operations"
+
+  - name: "IT & Marketing / E-Commerce"
+    weight: 1.0
+    keywords:
+      - "Marketing Technology"
+      - "MarTech"
+      - "E-Commerce Developer"
+      - "Digital Marketing Analyst"
+      - "Growth Engineer"
+      - "CRM Developer"
+      - "Marketing Automation"
+      - "Web Analytics"
+
+  # ─── PROFIL 3: Non-IT Fallback (Gewicht 0.6, Threshold ≥60) ─────────────
+  - name: "Vertrieb & Business Development"
+    weight: 0.6
+    keywords:
+      - "Sales Engineer"
+      - "Technical Sales"
+      - "Business Development"
+      - "Account Manager Tech"
+      - "Pre-Sales Consultant"
+      - "Solution Sales"
+
+  - name: "Marketing & Content"
+    weight: 0.6
+    keywords:
+      - "Content Manager"
+      - "Marketing Manager"
+      - "Performance Marketing"
+      - "Brand Manager"
+      - "Product Marketing"
+
+  - name: "Logistik & Operations"
+    weight: 0.6
+    keywords:
+      - "Logistics Manager Junior"
+      - "Operations Analyst"
+      - "Supply Chain Manager"
+      - "Procurement Analyst"
+
+# Senior-Filter – wird im Scraper auf Titel angewendet
+filters:
+  exclude_title_keywords:
+    - "Senior"
+    - "Lead"
+    - "Principal"
+    - "Head of"
+    - "Director"
+    - "VP "
+    - "Chief"
+    - "Staff Engineer"
+    - "(Senior)"
+    - "Sr."

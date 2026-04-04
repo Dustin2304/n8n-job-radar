@@ -20,6 +20,8 @@ class JobResult(BaseModel):
         default_factory=list,
         description="List of required skills extracted from the posting; empty if not determinable",
     )
+    score: int = Field(default=0, description="Relevance score 0-100 computed by rule-based scorer")
+    score_reason: str = Field(default="", description="Short human-readable reason for the score")
 
 
 class ScrapeResponse(BaseModel):

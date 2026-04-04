@@ -34,8 +34,39 @@ log = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 HOURS_OLD = 168        # 7 days
-RESULTS_PER_SEARCH = 25
+RESULTS_PER_SEARCH = 50
 KM_TO_MILES = 0.621371
+
+EXCLUDE_TITLE_KEYWORDS = [
+    # Seniority
+    "senior", "(senior)", "sr.", "sr ",
+    "lead", "tech lead", "team lead",
+    "principal", "staff engineer",
+    "head of", "director", "vp ", "c-level", "cto", "cio", "cpo", "cso",
+    "chief", "vice president", "expert", "experienced",
+    # Studentische / Ausbildung
+    "werkstudent", "werkstudierende", "working student",
+    "praktikum", "praktikant", "internship", "intern",
+    "pflichtpraktikum", "praxissemester", "hiwi", "tutor",
+    "thesis", "bachelor thesis", "master thesis", "abschlussarbeit",
+    "duales studium", "ausbildung", "trainee", "apprentice",
+    # IT Support / Helpdesk
+    "helpdesk", "help desk", "it support", "it-support",
+    "1st level", "2nd level", "3rd level", "first level", "second level",
+    "systemadministrator", "sysadmin", "system administrator",
+    "it administrator", "it-administrator",
+    # Fachlich irrelevante Rollen
+    "sap berater", "sap consultant", "sap-berater",
+    "salesforce", "servicenow", "oracle consultant",
+    "sharepoint",
+    # Branchenfremde Rollen
+    "steuerberater", "wirtschaftsprüfer", "steuerfachangestellte",
+    "außendienst", "sales manager", "vertriebsmitarbeiter",
+    "pflegefachkraft", "krankenpflege", "medizinische fachangestellte",
+    "fahrer", "lkw", "kraftfahrer",
+    # Freelance / Selbstständig
+    "freelance only", "selbstständig", "freiberuflich",
+]
 
 LEVEL_MAP = {
     "internship": "Entry",
@@ -76,16 +107,6 @@ def map_level(raw_level: str | None) -> str:
     return LEVEL_MAP.get(raw_level.strip().lower(), "Unknown")
 
 
-def should_exclude(title: str, job_level: str | None, exclude_cfg: dict) -> bool:
-    title_lower = title.lower()
-    for kw in exclude_cfg.get("title_keywords", []):
-        if kw.lower() in title_lower:
-            return True
-    excluded_levels = [lvl.lower() for lvl in exclude_cfg.get("levels", [])]
-    if job_level and job_level.strip().lower() in excluded_levels:
-        return True
-    return False
-
 
 # ── Core scrape ───────────────────────────────────────────────────────────────
 def run_scrape() -> ScrapeResponse:
@@ -93,8 +114,11 @@ def run_scrape() -> ScrapeResponse:
 
     profiles: list[dict] = cfg["profiles"]
     locations: list[dict] = cfg["locations"]
-    exclude_cfg: dict = cfg.get("exclude", {})
     watchlist: list[str] = [c["name"] for c in cfg.get("companies", [])]
+
+    # Merge hardcoded + config-based exclude keywords
+    config_excludes = [kw.lower() for kw in cfg.get("filters", {}).get("exclude_title_keywords", [])]
+    all_exclude_keywords = list(set(EXCLUDE_TITLE_KEYWORDS + config_excludes))
 
     seen_urls: set[str] = set()
     seen_title_company: set[tuple[str, str]] = set()
@@ -149,12 +173,13 @@ def run_scrape() -> ScrapeResponse:
                         continue
 
                     title = str(row.get("title", "") or "").strip()
+
+                    # Filter vor Dedup
+                    if any(kw in title.lower() for kw in all_exclude_keywords):
+                        continue
+
                     company = str(row.get("company", "") or "").strip()
                     job_level_raw = str(row.get("job_level", "") or "").strip() or None
-
-                    # Pre-filter before any further processing
-                    if should_exclude(title, job_level_raw, exclude_cfg):
-                        continue
 
                     # Dedup by title+company
                     dedup_key = (title.lower(), company.lower())
