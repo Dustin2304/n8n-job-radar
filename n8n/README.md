@@ -36,6 +36,8 @@ Manual Trigger
 
 ## Setup
 1. Install and run n8n locally.
+   - npm: `npm install -g n8n`
+   - or Docker: `docker run --name n8n -p 5678:5678 -v ~/.n8n:/home/node/.n8n docker.n8n.io/n8nio/n8n`
 2. Import `workflow.json` via *Workflows -> Import from File*.
 3. Configure credentials in n8n:
    - **Ollama account**: connect to your local Ollama instance and make sure `qwen2.5:3b` is available.

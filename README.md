@@ -43,6 +43,16 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
+Install n8n separately if you want to use the bundled workflow:
+```bash
+npm install -g n8n
+```
+
+Or run n8n with Docker instead of a global install:
+```bash
+docker run --name n8n -p 5678:5678 -v ~/.n8n:/home/node/.n8n docker.n8n.io/n8nio/n8n
+```
+
 ## Running
 Start the API server and n8n together:
 ```powershell
@@ -52,7 +62,7 @@ scripts/run.ps1
 scripts/run.sh
 ```
 
-Both scripts start `n8n` and the FastAPI app together. They expect the `n8n` CLI to be installed and available in `PATH`.
+Both scripts start `n8n` and the FastAPI app together. They expect the `n8n` CLI to be installed and available in `PATH`. If you prefer Docker for n8n, start the container separately and run only the FastAPI server.
 
 Start only the API server:
 ```bash
