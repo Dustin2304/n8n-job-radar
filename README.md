@@ -44,13 +44,17 @@ pip install -e ".[dev]"
 ```
 
 ## Running
-Start the API server:
+Start the API server and n8n together:
 ```powershell
 scripts/run.ps1
 ```
 ```bash
 scripts/run.sh
 ```
+
+Both scripts start `n8n` and the FastAPI app together. They expect the `n8n` CLI to be installed and available in `PATH`.
+
+Start only the API server:
 ```bash
 python -m uvicorn api.main:app --port 8001
 ```
