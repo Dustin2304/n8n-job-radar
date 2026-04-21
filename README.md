@@ -1,0 +1,143 @@
+# Job Radar
+A personal job radar for junior-to-mid roles that scrapes Indeed and LinkedIn via `python-jobspy`, filters and scores matches deterministically, and exposes the result as JSON for an n8n downstream consumer.
+
+## What This Project Does
+- Scrapes listings from Indeed and LinkedIn through `python-jobspy`.
+- Runs profile-based keyword searches from `config.yaml` across configured locations.
+- Excludes senior, internship, trainee, and other unwanted title patterns before scoring.
+- Scores remaining jobs with a rule-based `0-100` relevance model and applies profile-specific thresholds.
+- Serves fresh, cached, and aggregated results through FastAPI endpoints backed by a local JSON cache.
+
+## Architecture
+```text
+config.yaml --> scraper --> filter (exclude + profile-match) --> scorer --> threshold gate --> /jobs
+                  |                                                                          |
+                  +--> jobspy (indeed/linkedin)                              JSON cache <----+
+```
+The scoring step is rule-based on purpose: it is deterministic, free to run, and easy to test. That makes it a good fit for a local screening service with transparent ranking logic. LLM-based reasoning is a deliberate later step and is not part of this repository.
+
+## Setup
+Windows PowerShell:
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+```
+
+Unix shell:
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+## Running
+Start the API server:
+```powershell
+scripts/run.ps1
+```
+```bash
+scripts/run.sh
+```
+```bash
+python -m uvicorn api.main:app --port 8001
+```
+
+Run a scrape directly and print JSON to stdout:
+```bash
+python -m api.scraper
+```
+
+Run tests:
+```bash
+pytest tests/ -v
+```
+
+## API Endpoints
+| Endpoint | Method | Purpose |
+| --- | --- | --- |
+| `/health` | `GET` | Health check |
+| `/jobs` | `GET` | Runs a fresh scrape and writes the cache |
+| `/jobs/cached` | `GET` | Returns the last cached scrape result |
+| `/jobs/stats` | `GET` | Returns aggregates: `by_profile`, `by_source`, `watchlist_count` |
+
+## Example Response
+```json
+{
+  "jobs": [
+    {
+      "title": "AI Engineer",
+      "company": "Example GmbH",
+      "location": "Karlsruhe, Germany",
+      "url": "https://example.com/jobs/1",
+      "source": "linkedin",
+      "date_posted": "2026-04-20",
+      "is_remote": false,
+      "description": "Build internal LLM and Python services for document workflows.",
+      "level": "Entry",
+      "profile": "AI & Data Engineering",
+      "in_watchlist": false,
+      "skills_required": [],
+      "score": 85,
+      "score_reason": "Ai Engineer, LLM, Python, Entry-Level"
+    },
+    {
+      "title": "Backend Developer",
+      "company": "Sample Tech AG",
+      "location": "Karlsruhe, Germany",
+      "url": "https://example.com/jobs/2",
+      "source": "indeed",
+      "date_posted": "2026-04-19",
+      "is_remote": true,
+      "description": "FastAPI and Docker role focused on backend automation services.",
+      "level": "Mid",
+      "profile": "Software Development",
+      "in_watchlist": true,
+      "skills_required": [],
+      "score": 76,
+      "score_reason": "Backend Developer, FastAPI, Docker, Watchlist, Mid-Level"
+    }
+  ],
+  "total_found": 124,
+  "total_after_filter": 2,
+  "scraped_at": "2026-04-21T08:30:00+00:00",
+  "profiles_searched": ["AI & Data Engineering", "Software Development"],
+  "failed_searches": 0
+}
+```
+
+## Configuration
+| Field | Effect |
+| --- | --- |
+| `locations[].city`, `radius_km`, `country` | Search area for each `jobspy` call |
+| `scoring.threshold_it` | Minimum score for IT profiles; lower results are dropped |
+| `scoring.threshold_non_it` | Minimum score for non-IT profiles with a higher hurdle |
+| `profiles[].name`, `keywords`, `weight` | Search profile definition; `weight < 1.0` marks non-IT fallback profiles and reduces the effective score |
+| `filters.exclude_title_keywords` | Extends the hardcoded senior and internship title filters |
+| `companies` | Optional watchlist; matching jobs get `in_watchlist: true` and a score bonus |
+
+## Scoring At a Glance
+Each job starts at `30` points. Title matches add up to `35`, description matches add up to `25`, watchlist matches add `8`, and junior or entry-style titles add `5`. The profile `weight` is applied to the accumulated score, which lets non-IT fallback profiles rank lower without separate logic. All scoring rules live in `api/scorer.py` and can be adjusted without changing the API surface.
+
+## Tests
+11 unit tests cover scorer weighting, filter word boundaries, `nan` normalization, level inference, and model defaults. Run them with `pytest tests/ -v`.
+
+## Limitations
+- Focused on German/DACH search coverage, currently configured around Karlsruhe, Germany.
+- Depends on `python-jobspy`, so rate limits and source-site markup changes can affect Indeed and LinkedIn scraping.
+- No LLM reasoning; relevance scoring is fully rule-based.
+- No persistence layer beyond a local file cache.
+- No authentication on the FastAPI endpoints; intended for local or internal use.
+
+## Project Structure
+```text
+api/
+  main.py       # FastAPI app + endpoints
+  scraper.py    # jobspy driver, filter, threshold gate
+  scorer.py     # rule-based scoring
+  models.py     # pydantic models
+config.yaml     # profiles, locations, thresholds
+scripts/        # run.sh / run.ps1
+tests/          # pytest suite
+pyproject.toml
+```
