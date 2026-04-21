@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyc
 *.pyo
 *.pyd
 *.so
@@ -11,8 +12,14 @@ venv/
 env/
 
 # Cache
-cache/
+.pytest_cache/
+cache/*
+!cache/.gitkeep
 *.json.bak
+
+*.egg-info/
+build/
+dist/
 
 # Environment & Secrets
 .env

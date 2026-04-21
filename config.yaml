@@ -4,6 +4,9 @@ locations:
     country: "Germany"
   # Remote komplett entfernt
 
+# Optional watchlist - add entries like "- name: \"Company GmbH\"" to flag jobs as in_watchlist.
+companies: []
+
 scoring:
   threshold_it: 50          # Kern-IT + Schnittstellen
   threshold_non_it: 60      # Vertrieb, Marketing, Logistik
