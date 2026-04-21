@@ -4,9 +4,7 @@ api/main.py
 FastAPI application for the Job Radar service.
 """
 
-import json
 import logging
-import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,12 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parent.parent
-API_DIR = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(API_DIR))
 
-from models import JobResult, ScrapeResponse  # noqa: E402
-from scraper import run_scrape  # noqa: E402
+from .models import JobResult, ScrapeResponse
+from .scraper import run_scrape
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -105,6 +100,11 @@ def jobs_stats():
     )
 
 
-if __name__ == "__main__":
+def main() -> None:
     import uvicorn
+
     uvicorn.run("api.main:app", host="0.0.0.0", port=8001, reload=False)
+
+
+if __name__ == "__main__":
+    main()

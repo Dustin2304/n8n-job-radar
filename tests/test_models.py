@@ -1,0 +1,69 @@
+from datetime import datetime, timezone
+
+import pytest
+from pydantic import ValidationError
+
+from api.models import JobResult, ScrapeResponse
+
+
+def test_scrape_response_default_failed_searches():
+    response = ScrapeResponse(
+        jobs=[],
+        total_found=0,
+        total_after_filter=0,
+        scraped_at=datetime.now(timezone.utc),
+        profiles_searched=[],
+    )
+
+    assert response.failed_searches == 0
+
+
+def test_scrape_response_accepts_failed_searches():
+    response = ScrapeResponse(
+        jobs=[],
+        total_found=0,
+        total_after_filter=0,
+        scraped_at=datetime.now(timezone.utc),
+        profiles_searched=[],
+        failed_searches=3,
+    )
+
+    assert response.failed_searches == 3
+
+
+def test_job_result_score_defaults():
+    job = JobResult(
+        title="Python Developer",
+        company="Example GmbH",
+        location="Berlin, Germany",
+        url="https://example.com/jobs/1",
+        source="linkedin",
+        date_posted="2026-04-21",
+        is_remote=True,
+        description="Backend role with Python focus.",
+        level="Mid",
+        profile="Software Engineering",
+        in_watchlist=False,
+        skills_required=[],
+    )
+
+    assert job.score == 0
+    assert job.score_reason == ""
+
+
+def test_job_result_description_max_length():
+    with pytest.raises(ValidationError):
+        JobResult(
+            title="Python Developer",
+            company="Example GmbH",
+            location="Berlin, Germany",
+            url="https://example.com/jobs/1",
+            source="indeed",
+            date_posted="2026-04-21",
+            is_remote=False,
+            description="x" * 600,
+            level="Mid",
+            profile="Software Engineering",
+            in_watchlist=False,
+            skills_required=[],
+        )
