@@ -30,6 +30,7 @@ class ScrapeResponse(BaseModel):
     total_after_filter: int = Field(description="Number of jobs remaining after deduplication and filters")
     scraped_at: datetime = Field(description="UTC timestamp of when the scrape was executed")
     profiles_searched: list[str] = Field(description="Search profiles that were active during this scrape run")
+    failed_searches: int = Field(default=0, description="Number of search attempts that raised an exception")
 
 
 __all__ = ["JobResult", "ScrapeResponse"]
