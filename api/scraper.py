@@ -37,9 +37,9 @@ HOURS_OLD = 168
 RESULTS_PER_SEARCH = 50
 KM_TO_MILES = 0.621371
 NON_IT_PROFILES = {
-    "Vertrieb & Business Development",
+    "Sales & Business Development",
     "Marketing & Content",
-    "Logistik & Operations",
+    "Logistics & Operations",
 }
 
 EXCLUDE_TITLE_KEYWORDS = [

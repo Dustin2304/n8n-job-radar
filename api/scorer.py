@@ -175,7 +175,7 @@ def _build_reason(
     if weight < 1.0:
         parts.append("Non-IT")
 
-    return ", ".join(parts[:5]) or "Kein klarer Match"
+    return ", ".join(parts[:5]) or "No clear match"
 
 
 def score_job(job: JobResult, weight: float = 1.0) -> tuple[int, str]:

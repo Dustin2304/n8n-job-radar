@@ -2,17 +2,17 @@ locations:
   - city: "Karlsruhe"
     radius_km: 100
     country: "Germany"
-  # Remote komplett entfernt
+  # Remote-only search removed intentionally
 
 # Optional watchlist - add entries like "- name: \"Company GmbH\"" to flag jobs as in_watchlist.
 companies: []
 
 scoring:
-  threshold_it: 50          # Kern-IT + Schnittstellen
-  threshold_non_it: 60      # Vertrieb, Marketing, Logistik
+  threshold_it: 50          # Core IT and cross-functional IT roles
+  threshold_non_it: 60      # Sales, marketing, and logistics fallback roles
 
 profiles:
-  # ─── PROFIL 1: Kern-IT & AI (Gewicht 1.0) ────────────────────────────────
+  # Profile 1: Core IT and AI (weight 1.0)
   - name: "AI & Data Engineering"
     weight: 1.0
     keywords:
@@ -60,7 +60,7 @@ profiles:
       - "Data Warehouse"
       - "Reporting Analyst"
 
-  # ─── PROFIL 2: IT-Schnittstellen (Gewicht 1.0, gleiche Prio wie Kern-IT) ──
+  # Profile 2: IT interface roles (weight 1.0, same priority as core IT)
   - name: "IT Consulting & Business Interface"
     weight: 1.0
     keywords:
@@ -69,13 +69,13 @@ profiles:
       - "Digitalization Manager"
       - "Business Analyst IT"
       - "Prozessberater IT"
-      - "ERP Consultant Junior"        # SAP/ERP nur Junior-Level
+      - "ERP Consultant Junior"        # SAP/ERP only at junior level
       - "SAP Junior"
       - "Implementation Consultant"
       - "Solution Architect Junior"
       - "IT Projektmanager Junior"
 
-  - name: "IT & Produktion / IoT"
+  - name: "IT & Production / IoT"
     weight: 1.0
     keywords:
       - "MES Entwickler"
@@ -88,7 +88,7 @@ profiles:
       - "Smart Manufacturing"
       - "Automatisierungstechnik IT"
 
-  - name: "IT & Supply Chain / Logistik"
+  - name: "IT & Supply Chain / Logistics"
     weight: 1.0
     keywords:
       - "Supply Chain IT"
@@ -123,7 +123,7 @@ profiles:
       - "Web Analytics"
 
   # ─── PROFIL 3: Non-IT Fallback (Gewicht 0.6, Threshold ≥60) ─────────────
-  - name: "Vertrieb & Business Development"
+  - name: "Sales & Business Development"
     weight: 0.6
     keywords:
       - "Sales Engineer"
@@ -142,7 +142,7 @@ profiles:
       - "Brand Manager"
       - "Product Marketing"
 
-  - name: "Logistik & Operations"
+  - name: "Logistics & Operations"
     weight: 0.6
     keywords:
       - "Logistics Manager Junior"
@@ -150,7 +150,7 @@ profiles:
       - "Supply Chain Manager"
       - "Procurement Analyst"
 
-# Senior-Filter – wird im Scraper auf Titel angewendet
+# Senior-title filter applied in the scraper
 filters:
   exclude_title_keywords:
     - "Senior"
