@@ -10,11 +10,23 @@ A personal job radar for junior-to-mid roles that scrapes Indeed and LinkedIn vi
 
 ## Architecture
 ```text
-config.yaml --> scraper --> filter (exclude + profile-match) --> scorer --> threshold gate --> /jobs
-                  |                                                                          |
-                  +--> jobspy (indeed/linkedin)                              JSON cache <----+
+config.yaml --> scraper --> filter (exclude + profile-match) --> scorer --> threshold gate --> /jobs ----------+
+                  |                                                                          |                  |
+                  +--> jobspy (indeed/linkedin)                              JSON cache <----+                  |
+                                                                                                                 v
+                                                                                              n8n workflow --> Ollama reranking --> HTML email
 ```
-The scoring step is rule-based on purpose: it is deterministic, free to run, and easy to test. That makes it a good fit for a local screening service with transparent ranking logic. LLM-based reasoning is a deliberate later step and is not part of this repository.
+The API scoring step is rule-based on purpose: it is deterministic, free to run, and easy to test. That makes it a good fit for a local screening service with transparent ranking logic. Optional LLM-based reranking is included in the `n8n/` workflow as a downstream presentation layer, not as part of the API scoring logic.
+
+## End-to-End Flow with n8n
+The repository includes a sanitized workflow in `n8n/workflow.json`.
+
+1. FastAPI runs a fresh scrape through `GET /jobs` and writes the local cache.
+2. n8n reads the cached payload from `GET /jobs/cached`.
+3. Jobs are flattened, split into batches, and scored again by a local Ollama model using a profile-specific prompt.
+4. Relevant jobs are aggregated into a weekly HTML report and sent by email.
+
+This split keeps the API deterministic and testable while still letting the final shortlist benefit from LLM-based prioritization.
 
 ## Setup
 Windows PowerShell:
@@ -125,7 +137,6 @@ Each job starts at `30` points. Title matches add up to `35`, description matche
 ## Limitations
 - Focused on German/DACH search coverage, currently configured around Karlsruhe, Germany.
 - Depends on `python-jobspy`, so rate limits and source-site markup changes can affect Indeed and LinkedIn scraping.
-- No LLM reasoning; relevance scoring is fully rule-based.
 - No persistence layer beyond a local file cache.
 - No authentication on the FastAPI endpoints; intended for local or internal use.
 
@@ -137,6 +148,7 @@ api/
   scorer.py     # rule-based scoring
   models.py     # pydantic models
 config.yaml     # profiles, locations, thresholds
+n8n/            # sanitized workflow + n8n-specific docs
 scripts/        # run.sh / run.ps1
 tests/          # pytest suite
 pyproject.toml

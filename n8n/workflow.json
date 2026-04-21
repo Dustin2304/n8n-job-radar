@@ -1,0 +1,328 @@
+{
+  "name": "Job Radar - Ollama & FastAPI",
+  "nodes": [
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "9b5cfec5-f8a2-403d-8456-5604fc3bc0c7",
+      "name": "Split in Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        416,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Bereitet einen Batch von Jobs für Claude auf\nconst items = $input.all();\n\nconst jobList = items.map((item, i) => {\n const j = item.json;\n const watchlist = j.in_watchlist ? ' [WATCHLIST ]' : '';\n const remote = j.is_remote ? ' [Remote]' : '';\n return `${i+1}. [${j.company}${watchlist}${remote}] ${j.title} (${j.location})\\n ${j.description?.slice(0, 150) || ''}...`;\n}).join('\\n\\n');\n\nconst prompt = `Du antwortest NUR mit einem JSON-Array. Beginne mit [ und ende mit ]. Kein Text davor oder danach.\n\n/no_think Du bewertest Job-Postings für Dustin, einen Junior/Mid-Level AI Engineering Kandidaten.\n\nSEIN PROFIL:\n- Abschluss: International Management B.Sc. mit starkem IT-Fokus (2025)\n- Tech-Stack: Python, TypeScript, FastAPI, LangChain/LangGraph, Azure, Docker, REST APIs\n- Praxiserfahrung: AI-Agent Entwicklung (Copilot Studio, GPT-4, RAG), Excel-Automatisierung, MCP-Integration\n- Thesis: KI-Agent bei Bosch (Copilot Studio + Azure AI + GPT-4)\n- Angestrebte Zertifizierung: Azure AI-102\n- Level: JUNIOR oder MID-ENTRY (0–3 Jahre). Senior/Lead/Principal Stellen = Score 0.\n\nZIEL-ROLLEN nach Priorität:\n1. AI/ML Engineer, GenAI Developer, LLM Engineer (Score-Bonus +10)\n2. Data Scientist, Data Engineer, MLOps (Score-Bonus +5)\n3. Software/Backend/Fullstack Developer mit AI-Bezug (kein Bonus)\n4. IT-Schnittstellen: Business Analyst IT, Digitalisierung, IoT/MES, Supply Chain IT, Finance IT, MarTech (kein Bonus)\n5. Vertrieb/Marketing/Logistik ohne direkten IT-Bezug (Score-Malus -10)\n\nREGION: Karlsruhe und Umgebung (≤100km). Remote-only Stellen = Score 0.\n\nWATCHLIST-FIRMEN erhalten automatisch +5 auf den Score (bereits im Tag markiert).\n\nAUSSCHLUSSKRITERIEN (Score = 0):\n- Titel enthält: Senior, Lead, Principal, Head of, Director, VP, Chief\n- Reiner Vertrieb ohne technische Komponente\n- Reines HR/Recruiting\n\nSCORING-ORIENTIERUNG:\n- 85–100: Perfekte AI/ML Stelle, Junior-Level, Karlsruhe/Nähe, bekannte Firma\n- 70–84: Gute Tech-Stelle mit AI-Bezug oder starker Schnittstellen-Job\n- 55–69: Solider Backend/Data Job oder interessanter Schnittstellen-Job\n- 40–54: Nur relevant als Fallback (Vertrieb/Marketing/Logistik)\n- 0–39: Nicht relevant\n\nJOBS ZU BEWERTEN:\n${jobList}\n\nKRITISCHE REGELN:\n- Jeder Job bekommt GENAU ein Objekt mit GENAU diesen Feldern: index, score, reason\n- KEIN score2, KEINE nested Arrays, KEINE zusätzlichen Felder\n- Das Array muss exakt ${items.length} Objekte enthalten\n- reason: maximal 8 Wörter auf Deutsch\n- Antworte AUSSCHLIESSLICH mit dem JSON-Array, kein Text davor oder danach\n\nBeispiel für 3 Jobs:\n[{\"index\":1,\"score\":88,\"reason\":\"AI Engineer, Python, LLM, Junior\"},{\"index\":2,\"score\":0,\"reason\":\"Senior-Stelle, nicht passend\"},{\"index\":3,\"score\":62,\"reason\":\"Backend mit AI-Komponente, Mittelstand\"}]\n[`;\n\nreturn [{ json: { prompt, items: items.map(i => i.json), count: items.length } }];\n"
+      },
+      "id": "113f4547-6e67-44b5-8ad5-87145aaa447d",
+      "name": "Prepare LLM Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const llmResponse = $input.first().json;\nconst batchItems = $('Prepare LLM Prompt').item.json.items;\nlet text = llmResponse?.text || '';\n\n// Alle JSON-Arrays extrahieren und zusammenführen\nconst matches = text.match(/\\{[^{}]*\"index\"[^{}]*\\}/g);\nif (!matches) return [];\n\nconst scores = [];\nfor (const match of matches) {\n try {\n const obj = JSON.parse(match);\n if (obj.index !== undefined && obj.score !== undefined) {\n scores.push(obj);\n }\n } catch(e) {\n continue;\n }\n}\n\nconst relevantJobs = [];\nfor (const result of scores) {\n const idx = result.index - 1;\n if (idx >= 0 && idx < batchItems.length && result.score >= 50) {\n relevantJobs.push({\n json: {\n ...batchItems[idx],\n score: result.score,\n reason: result.reason,\n }\n });\n }\n}\n\nreturn relevantJobs;"
+      },
+      "id": "faa4ec37-aae6-491b-ab51-4b9920ffd555",
+      "name": "Filter Relevant Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        288
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "all_relevant_jobs",
+        "options": {}
+      },
+      "id": "e90fd694-526d-42c1-997b-a6443802c484",
+      "name": "Aggregate Batches",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        672,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Erstellt den finalen HTML-Report\nconst jobs = $input.first().json.all_relevant_jobs || [];\n\nif (jobs.length === 0) {\n return [{ json: { html: '<p>Keine relevanten Jobs diese Woche gefunden.</p>', subject: 'Job Radar – Keine neuen Treffer' } }];\n}\n\nconst today = new Date().toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });\nconst kw = (() => {\n const d = new Date();\n d.setHours(0,0,0,0);\n d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);\n const week1 = new Date(d.getFullYear(),0,4);\n return 1 + Math.round(((d-week1)/86400000 - 3 + (week1.getDay()+6)%7)/7);\n})();\n\n// ── Sektionen definieren ──────────────────────────────────────────────────────\n// Innerhalb jeder Sektion: Watchlist zuerst, dann nach Score absteigend\nconst sortList = list => list.sort((a, b) => {\n if (b.in_watchlist !== a.in_watchlist) return b.in_watchlist ? 1 : -1;\n return (b.score || 0) - (a.score || 0);\n});\n\nconst top = sortList(jobs.filter(j => j.score >= 80));\nconst good = sortList(jobs.filter(j => j.score >= 65 && j.score < 80));\nconst okay = sortList(jobs.filter(j => j.score >= 55 && j.score < 65));\nconst nonit = sortList(jobs.filter(j => j.score >= 40 && j.score < 55));\n\n// ── Badge-Helfer ──────────────────────────────────────────────────────────────\nconst sourceBadge = s => {\n const colors = { indeed: '#b45309', linkedin: '#1d4ed8' };\n return `<span style=\"background:${colors[s]||'#374151'};color:white;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:500\">${s}</span>`;\n};\n\nconst watchlistBadge = w => w\n ? `<span style=\"background:#7c3aed;color:white;padding:1px 5px;border-radius:6px;font-size:11px\">⭐ Watchlist</span>`\n : '';\n\nconst levelBadge = l => {\n if (!l || l === 'Unknown') return '';\n const colors = { Entry: '#0891b2', Mid: '#0284c7', Senior: '#dc2626' };\n return `<span style=\"background:${colors[l]||'#6b7280'};color:white;padding:1px 5px;border-radius:6px;font-size:11px\">${l}</span>`;\n};\n\nconst scoreBar = s => {\n const color = s >= 80 ? '#16a34a' : s >= 65 ? '#d97706' : s >= 55 ? '#6b7280' : '#9ca3af';\n const width = Math.round(s);\n return `\n <div style=\"display:flex;align-items:center;gap:6px\">\n <div style=\"flex:1;background:#f3f4f6;border-radius:4px;height:6px;overflow:hidden\">\n <div style=\"width:${width}%;background:${color};height:6px;border-radius:4px\"></div>\n </div>\n <span style=\"font-weight:700;color:${color};font-size:13px;min-width:26px\">${s}</span>\n </div>\n <div style=\"color:#9ca3af;font-size:11px;margin-top:2px\">${''}</div>`;\n};\n\n// ── Tabellenzeile ─────────────────────────────────────────────────────────────\nconst row = j => {\n const watchlistRow = j.in_watchlist ? 'background:#faf5ff;' : '';\n const watchlistBorder = j.in_watchlist ? 'border-left:3px solid #7c3aed;' : 'border-left:3px solid transparent;';\n return `\n <tr style=\"${watchlistRow}${watchlistBorder}border-bottom:1px solid #f3f4f6\">\n <td style=\"padding:10px 8px\">\n <a href=\"${j.url}\" style=\"color:#2563eb;font-weight:600;text-decoration:none;font-size:13px\">${j.title}</a>\n <div style=\"margin-top:3px\">${levelBadge(j.level)}</div>\n </td>\n <td style=\"padding:10px 8px;font-size:13px;color:#374151\">\n <div style=\"font-weight:500\">${j.company}</div>\n <div style=\"margin-top:3px\">${watchlistBadge(j.in_watchlist)}</div>\n </td>\n <td style=\"padding:10px 8px;color:#6b7280;font-size:12px\">${j.location}</td>\n <td style=\"padding:10px 8px\">${sourceBadge(j.source)}</td>\n <td style=\"padding:10px 8px;min-width:120px\">\n ${scoreBar(j.score)}\n <div style=\"color:#9ca3af;font-size:11px;margin-top:2px\">${j.reason || ''}</div>\n </td>\n </tr>`;\n};\n\n// ── Tabellen-Sektion ──────────────────────────────────────────────────────────\nconst section = (title, emoji, headerBg, list) => {\n if (list.length === 0) return '';\n const rowsHtml = list.map(row).join('');\n return `\n<div style=\"margin-bottom:28px\">\n <h2 style=\"background:${headerBg};color:white;padding:10px 16px;border-radius:8px 8px 0 0;font-size:14px;margin:0;display:flex;justify-content:space-between;align-items:center\">\n <span>${emoji} ${title}</span>\n <span style=\"opacity:0.75;font-weight:400;font-size:13px\">${list.length} Stelle${list.length !== 1 ? 'n' : ''}</span>\n </h2>\n <table style=\"width:100%;border-collapse:collapse;background:white;border:1px solid #e5e7eb;border-top:none\">\n <thead>\n <tr style=\"background:#f9fafb;border-bottom:1px solid #e5e7eb\">\n <th style=\"padding:8px;text-align:left;font-size:11px;color:#9ca3af;font-weight:600;text-transform:uppercase;width:28%\">Titel</th>\n <th style=\"padding:8px;text-align:left;font-size:11px;color:#9ca3af;font-weight:600;text-transform:uppercase;width:20%\">Unternehmen</th>\n <th style=\"padding:8px;text-align:left;font-size:11px;color:#9ca3af;font-weight:600;text-transform:uppercase;width:17%\">Ort</th>\n <th style=\"padding:8px;text-align:left;font-size:11px;color:#9ca3af;font-weight:600;text-transform:uppercase;width:10%\">Quelle</th>\n <th style=\"padding:8px;text-align:left;font-size:11px;color:#9ca3af;font-weight:600;text-transform:uppercase;width:25%\">Score</th>\n </tr>\n </thead>\n <tbody>${rowsHtml}</tbody>\n </table>\n</div>`;\n};\n\n// ── Statistik-Kacheln ─────────────────────────────────────────────────────────\nconst statCard = (count, label, color) => `\n <div style=\"background:white;border-radius:8px;padding:14px 18px;border-left:4px solid ${color};flex:1;min-width:0\">\n <div style=\"font-size:28px;font-weight:700;color:${color}\">${count}</div>\n <div style=\"color:#6b7280;font-size:12px;margin-top:2px\">${label}</div>\n </div>`;\n\nconst watchlistTotal = jobs.filter(j => j.in_watchlist).length;\n\n// ── HTML zusammenbauen ────────────────────────────────────────────────────────\nconst html = `<!DOCTYPE html>\n<html lang=\"de\">\n<head><meta charset=\"UTF-8\"><title>Job Radar KW${kw}</title></head>\n<body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f4f6;margin:0;padding:20px\">\n<div style=\"max-width:960px;margin:0 auto\">\n\n <!-- Header -->\n <div style=\"background:linear-gradient(135deg,#1e40af,#7c3aed);color:white;padding:24px 28px;border-radius:12px;margin-bottom:20px\">\n <h1 style=\"margin:0;font-size:22px;font-weight:700\">Job Radar – KW${kw}</h1>\n <p style=\"margin:6px 0 0;opacity:0.8;font-size:14px\">${today} · ${jobs.length} relevante Stellen · ${watchlistTotal} Watchlist-Treffer</p>\n </div>\n\n <!-- Stats -->\n <div style=\"display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap\">\n ${statCard(top.length, 'Top Match ≥80', '#16a34a')}\n ${statCard(good.length, 'Gut 65–79', '#d97706')}\n ${statCard(okay.length, 'Okay 55–64', '#6b7280')}\n ${statCard(nonit.length, 'Sonstige 40–54', '#d1d5db')}\n ${statCard(watchlistTotal, '⭐ Watchlist-Firmen', '#7c3aed')}\n </div>\n\n <!-- Sektionen -->\n ${section('Top Matches', '', '#16a34a', top)}\n ${section('Gute Treffer', '', '#d97706', good)}\n ${section('Weitere Treffer','', '#64748b', okay)}\n ${section('Sonstige', '', '#9ca3af', nonit)}\n\n <div style=\"text-align:center;color:#9ca3af;font-size:11px;margin-top:24px;padding-bottom:20px\">Job Radar · Karlsruhe ≤100km · Automatisch generiert\n </div>\n\n</div>\n</body></html>`;\n\nreturn [{ json: { html, subject: `Job Radar KW${kw} – ${jobs.length} Stellen (${top.length} Top / ${watchlistTotal} Watchlist)` } }];"
+      },
+      "id": "a9c78e33-edbf-49f1-bb6b-ad3f235d4041",
+      "name": "Build HTML Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.REPORT_EMAIL || 'YOUR_EMAIL@example.com' }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "714159b2-d5b3-42fd-867f-d07c09fba925",
+      "name": "Send Email Report",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        -144
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "Gmail OAuth2 in n8n Credentials einrichten"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        880,
+        144
+      ],
+      "id": "bf7f4195-7112-4f61-845f-f792d4db5e58",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8001/jobs/cached",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "1e2f505d-43da-473c-8bb1-d147afbfc4a1",
+      "name": "Fetch Cached Jobs"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst jobs = response.jobs || [];\nreturn jobs.map(job => ({ json: job }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        0
+      ],
+      "id": "af5c71c7-dfc9-464f-b808-f7328f77c614",
+      "name": "Parse API Response",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:3B",
+        "options": {
+          "numCtx": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        880,
+        304
+      ],
+      "id": "57c303f3-6025-41b5-b0d4-e9b55c78c0cc",
+      "name": "Ollama Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "a49d2598-c97a-4e00-8d85-cf6d8b4366e7",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8001/jobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -288,
+        -192
+      ],
+      "id": "89739cfa-0cc7-485f-a337-880604286cac",
+      "name": "Trigger Fresh Scrape",
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Split in Batches": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Batches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare LLM Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare LLM Prompt": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Relevant Jobs": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Batches": {
+      "main": [
+        [
+          {
+            "node": "Build HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HTML Report": {
+      "main": [
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Filter Relevant Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Cached Jobs": {
+      "main": [
+        [
+          {
+            "node": "Parse API Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse API Response": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trigger Fresh Scrape",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Fresh Scrape": {
+      "main": [
+        [
+          {
+            "node": "Fetch Cached Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
