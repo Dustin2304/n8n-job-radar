@@ -2,7 +2,6 @@
 api/scorer.py
 Rule-based pre-scorer for JobResult objects.
 Computes a deterministic score 0-100 and a short reason string.
-The LLM in n8n only needs to generate/confirm the reason afterwards.
 """
 
 from __future__ import annotations
